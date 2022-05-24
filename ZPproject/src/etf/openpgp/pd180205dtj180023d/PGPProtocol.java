@@ -2,10 +2,9 @@ package etf.openpgp.pd180205dtj180023d;
 
 import org.bouncycastle.openpgp.PGPPublicKey;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PGPProtocol {
@@ -17,12 +16,13 @@ public class PGPProtocol {
 
     //add params
     public static List<PGPPublicKey> getPublicKeys(){
-        return null;
+        return new ArrayList<>();
     }
 
     public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorythm, List<PGPOptions> options){
         try{
             OutputStream output=new FileOutputStream(new File(inputFile+".pgp"));
+            InputStream input=new FileInputStream(new File(inputFile));
             List<PGPPublicKey> publicKeys=getPublicKeys();
 
             if(options.contains(PGPOptions.COMPATIBILITY)){
@@ -38,9 +38,16 @@ public class PGPProtocol {
                 //PGPEncryptor.configureEncryption(algorythm,)
             }
 
+            byte[] buffer=new byte[BUFFER_SIZE];
+            int size=-1;
+            while ((size=input.read(buffer))!=-1){
+                output.write(buffer,0,size);
+            }
+            output.close();
+
         }
         catch(Exception e){
-
+            System.err.println(e);
         }
 
     }
