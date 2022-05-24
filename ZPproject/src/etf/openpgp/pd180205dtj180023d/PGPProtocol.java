@@ -1,5 +1,7 @@
 package etf.openpgp.pd180205dtj180023d;
 
+import org.apache.commons.codec.binary.Base64OutputStream;
+import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
 
 import java.io.*;
@@ -15,8 +17,9 @@ public class PGPProtocol {
     }
 
     //add params
-    public static List<PGPPublicKey> getPublicKeys(){
+    public static List<PGPPublicKey> getPublicKeys() throws PGPException {
         return new ArrayList<>();
+
     }
 
     public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorythm, List<PGPOptions> options){
@@ -26,16 +29,16 @@ public class PGPProtocol {
             List<PGPPublicKey> publicKeys=getPublicKeys();
 
             if(options.contains(PGPOptions.COMPATIBILITY)){
-                //PGPEncryptor.configureEncryption(algorythm,)
+                output=new Base64OutputStream(output);
             }
             if(options.contains(PGPOptions.ENCRYPTION)){
                 output=PGPEncryptor.configureEncryption(algorythm,publicKeys,output);
             }
             if(options.contains(PGPOptions.COMPRESSION)){
-                //PGPEncryptor.configureEncryption(algorythm,)
+                //compression
             }
             if(options.contains(PGPOptions.AUTENTICATION)){
-                //PGPEncryptor.configureEncryption(algorythm,)
+                //autentication
             }
 
             byte[] buffer=new byte[BUFFER_SIZE];
