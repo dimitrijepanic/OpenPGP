@@ -17,6 +17,7 @@ import java.awt.event.WindowEvent;
 public class AppMainFrame extends Frame implements ActionListener{
 	
 	private AddKeyDialog dialog;
+	private EncryptionDialog encryptionDialog;
 	
 	class WindowClosingAdapter extends WindowAdapter{
 		public void windowClosing(WindowEvent we) {
@@ -41,9 +42,27 @@ public class AppMainFrame extends Frame implements ActionListener{
 			if(dialog == null) dialog = new AddKeyDialog(this);
 			dialog.setVisible(true);
 		});
+		configureMenu();
 		b1.setFont(new Font("Serif", Font.BOLD, 15));
 		panel.add(b1);
 		add(panel);
+	}
+
+	private void configureMenu(){
+		MenuBar menuBar=new MenuBar();
+		Menu menu=new Menu();
+		MenuItem encryptionItem=new MenuItem();
+		encryptionItem.setLabel("Encrypt");
+		menu.add(encryptionItem);
+		menu.setFont(new Font("Serif", Font.BOLD, 15));
+		encryptionItem.setFont(new Font("Serif", Font.BOLD, 15));
+		encryptionItem.addActionListener(item->{
+			if(encryptionDialog==null) encryptionDialog=new EncryptionDialog(this);
+			encryptionDialog.setVisible(true);
+		});
+		menu.setLabel("Options");
+		menuBar.add(menu);
+		setMenuBar(menuBar);
 	}
 	
 	public void actionPerformed(ActionEvent ae) {

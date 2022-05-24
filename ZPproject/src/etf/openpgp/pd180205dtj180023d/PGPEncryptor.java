@@ -10,6 +10,7 @@ import org.bouncycastle.openpgp.operator.PGPDataEncryptorBuilder;
 import org.bouncycastle.openpgp.operator.bc.*;
 import org.bouncycastle.util.io.Streams;
 
+import javax.xml.crypto.dsig.keyinfo.PGPData;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.SecureRandom;
@@ -20,6 +21,7 @@ public class PGPEncryptor {
 
     public enum SymetricKeyAlgorithm{
         CAST5,TRIPLEDES;
+
         private int map(){
             switch (this){
                 case CAST5: return PGPEncryptedData.CAST5;
