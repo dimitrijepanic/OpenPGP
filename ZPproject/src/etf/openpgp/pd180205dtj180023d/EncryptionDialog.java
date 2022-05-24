@@ -4,14 +4,16 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 public class EncryptionDialog extends Dialog {
     public EncryptionDialog(Frame owner) {
         super(owner,"Encryption", true);
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent we) {
+                setVisible(false);
                 reset();
-                setVisible(false); }
+            }
         });
         setSize(350, 350);
         setLocation(450, 100);
@@ -19,12 +21,17 @@ public class EncryptionDialog extends Dialog {
         fillScreen();
     }
 
+    private PGPEncryptor.SymetricKeyAlgorithm symetricKeyAlgorithm;
+    private List<PGPProtocol.PGPOptions> options=new ArrayList<>();
+
 
     private java.util.List<NavigationPanel> panels=new ArrayList<>();
     private Panel content =new Panel();
     private Button next;
     private int index=0;
     private void reset() {
+        symetricKeyAlgorithm=PGPEncryptor.SymetricKeyAlgorithm.CAST5;
+        options.clear();
         panels.forEach(p->p.setVisible(false));
         panels.get(0).setVisible(true);
         index=0;
@@ -54,7 +61,15 @@ public class EncryptionDialog extends Dialog {
 
     private void navigate(){
         panels.forEach(p->p.setVisible(false));
-        panels.get(index).nextPanel().setVisible(true);
+        NavigationPanel nextPanel=panels.get(index).nextPanel();
+        if(nextPanel!=null){
+            nextPanel.setVisible(true);
+        }
+        else {
+            //pokreni enkripciju
+            setVisible(false);
+            reset();
+        }
     }
 
     private Checkbox autentication;
@@ -88,8 +103,16 @@ public class EncryptionDialog extends Dialog {
             add(compatibility);
         }
 
+        private void getOptions(){
+            if(autentication.getState()) options.add(PGPProtocol.PGPOptions.AUTENTICATION);
+            if(encryption.getState()) options.add(PGPProtocol.PGPOptions.ENCRYPTION);
+            if(compression.getState()) options.add(PGPProtocol.PGPOptions.COMPRESSION);
+            if(compatibility.getState()) options.add(PGPProtocol.PGPOptions.COMPATIBILITY);
+        }
+
         @Override
         public NavigationPanel nextPanel() {
+            getOptions();
             if(autentication.getState()) {
                 index++;
                 autentication.setState(false);
@@ -103,19 +126,32 @@ public class EncryptionDialog extends Dialog {
                 changeNextLabel();
                 return panels.get(2);
             }
-            else return panels.get(0);//promeni
+            else return null;
         }
     }
 
-    private class EncryptionPanel extends NavigationPanel{
 
+
+    private class EncryptionPanel extends NavigationPanel{
+        private Checkbox cast5;
+        private Checkbox trides;
         public EncryptionPanel() {
-            Label l=new Label("EncryptionPanel");
+            setLayout(new GridLayout(2,2));
+            Label l=new Label("Select symetric algorythm:");
+            Label labele=new Label();
             add(l);
+            add(labele);
+            CheckboxGroup radio=new CheckboxGroup();
+            cast5=new Checkbox("CAST5/128b",radio,true);
+            trides=new Checkbox("3DES/EDE",radio,false);
+            add(cast5);
+            add(trides);
         }
         @Override
         public NavigationPanel nextPanel() {
-            return panels.get(2);//promeni
+            if(cast5.getState()) symetricKeyAlgorithm=PGPEncryptor.SymetricKeyAlgorithm.CAST5;
+            if(trides.getState()) symetricKeyAlgorithm=PGPEncryptor.SymetricKeyAlgorithm.TRIPLEDES;
+            return null;
         }
     }
 
@@ -138,7 +174,7 @@ public class EncryptionDialog extends Dialog {
                 changeNextLabel();
                 return panels.get(2);
             }
-            else return panels.get(1);//promeni
+            else return null;
         }
     }
 
