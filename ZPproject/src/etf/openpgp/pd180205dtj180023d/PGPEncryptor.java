@@ -36,6 +36,6 @@ public class PGPEncryptor {
         publicKeys.forEach(publicKey -> {
             generator.addMethod(new BcPublicKeyKeyEncryptionMethodGenerator(publicKey));
         });
-        return generator.open(stream,PGPProtocol.BUFFER_SIZE);
+        return generator.open(stream,new byte[PGPProtocol.BUFFER_SIZE]);
     }
 }

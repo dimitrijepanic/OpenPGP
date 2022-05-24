@@ -9,7 +9,7 @@ import java.security.PublicKey;
 import java.util.List;
 
 public class PGPProtocol {
-    public static final long BUFFER_SIZE=1<<16;
+    public static final int BUFFER_SIZE=1<<16;
 
     public enum PGPOptions {
         AUTENTICATION, ENCRYPTION, COMPRESSION, COMPATIBILITY
