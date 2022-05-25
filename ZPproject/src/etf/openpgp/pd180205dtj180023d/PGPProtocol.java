@@ -1,6 +1,8 @@
 package etf.openpgp.pd180205dtj180023d;
 
 import org.apache.commons.codec.binary.Base64OutputStream;
+import org.bouncycastle.bcpg.CompressionAlgorithmTags;
+import org.bouncycastle.openpgp.PGPCompressedDataGenerator;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
 
@@ -35,7 +37,8 @@ public class PGPProtocol {
                 output=PGPEncryptor.configureEncryption(algorythm,publicKeys,output);
             }
             if(options.contains(PGPOptions.COMPRESSION)){
-                //compression
+                PGPCompressedDataGenerator compression=new PGPCompressedDataGenerator(CompressionAlgorithmTags.ZIP);
+                output=compression.open(output);
             }
             if(options.contains(PGPOptions.AUTENTICATION)){
                 //autentication
