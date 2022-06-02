@@ -41,6 +41,7 @@ import org.bouncycastle.openpgp.PGPKeyPair;
 import org.bouncycastle.openpgp.PGPKeyRingGenerator;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
+import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.bouncycastle.openpgp.PGPSignature;
 import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator;
@@ -190,16 +191,7 @@ public class AddKeyDialog extends Dialog {
 
 		// za potpisivanje kljuceva
 		PGPKeyPair masterKeyPair = getMasterKeyPair(this.username, this.algorithm, generator);
-
-		AsymmetricCipherKeyPair keyPair = generator.generateKeyPair();
 		
-		PGPKeyPair subkeyPair = null;
-		try {
-			subkeyPair = new BcPGPKeyPair(PGPPublicKey.RSA_ENCRYPT, keyPair, new Date());
-		} catch (PGPException e) {
-			e.printStackTrace();
-		}
-
 		// how to encrypt the secret key
 		// izdvoji kao static polje
 		PBESecretKeyEncryptor pske = encryptor
@@ -222,27 +214,25 @@ public class AddKeyDialog extends Dialog {
 			e.printStackTrace();
 		}
 
-		try {
-			keyRingGen.addSubKey(subkeyPair);
-		} catch (PGPException e) {
-			e.printStackTrace();
-		}
-
 		PGPPublicKeyRing publicKeyRing = keyRingGen.generatePublicKeyRing();
 		PGPSecretKeyRing secretKeyRing = keyRingGen.generateSecretKeyRing();
-		MyKeyRing myKeyRing = new MyKeyRing("./pana.asc",publicKeyRing,secretKeyRing) ;
+		Iterator<PGPPublicKey> iterator = publicKeyRing.getPublicKeys();
+		while(iterator.hasNext()) {
+			System.out.println(iterator.next().isEncryptionKey());
+		}
+		
+		Iterator<PGPSecretKey> iterator1 = secretKeyRing.getSecretKeys();
+		while(iterator1.hasNext()) {
+			System.out.println(iterator1.next().isSigningKey());
+		}
+
+		MyKeyRing myKeyRing = new MyKeyRing("./pana.asc",publicKeyRing, secretKeyRing) ;
 		mainFrame.addKeyRing(myKeyRing);
 		myKeyRing.writeToFile();
 		
 		// setuj novi kljuc za potpisivanje
-		setNewSignKey(this.username, this.algorithm, keyPair);
 		closeWindow();
 
-	}
-	
-	private void setNewSignKey(String username,String algorithm, AsymmetricCipherKeyPair pair) {
-		String key = username + " " + algorithm;
-		masterKeyMap.put(key, pair);
 	}
 
 	private void closeWindow() {
@@ -253,27 +243,14 @@ public class AddKeyDialog extends Dialog {
 
 	// generisi master kljuc ako ne postoji
 	private PGPKeyPair getMasterKeyPair(String username, String algorithm, RSAKeyPairGenerator generator) {
-		String key = username + " " + algorithm;
-
-
-		AsymmetricCipherKeyPair pair = null;
-		if (masterKeyMap.containsKey(key)) {
-			 pair = masterKeyMap.get(key);
-			 
-		}
 		
-		if(pair == null) pair = generator.generateKeyPair();
-		PGPKeyPair keyPair = null;
 		try {
-			keyPair = new BcPGPKeyPair(PGPPublicKey.RSA_SIGN, pair, new Date());
+			return new BcPGPKeyPair(PGPPublicKey.RSA_GENERAL, generator.generateKeyPair(), new Date());
 		} catch (PGPException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return null;
 		}
-
-		masterKeyMap.put(key, pair);
-
-		return keyPair;
 	}
 
 	// certainty - verovatnoca da bude prime number - kao kod mille rabina

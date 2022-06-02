@@ -45,6 +45,8 @@ public class AppMainFrame extends Frame implements ActionListener{
 	private JScrollPane p1;
 	private JTable table;
 	
+	// press count
+	private int pressedCount = 0;
 	class WindowClosingAdapter extends WindowAdapter{
 		public void windowClosing(WindowEvent we) {
 			dispose();
@@ -59,6 +61,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 		setLocation(400, 50);
 		setLayout(new BorderLayout());
 		fillScreen();
+		deleteKeyDialog = new DeleteKeyDialog(this);
 		setVisible(true);
 	}
 	
@@ -73,6 +76,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 		
 		keyPanel = new Panel();
 		table = new JTable();
+		addTableMouseListener();
 		DefaultTableModel model = new DefaultTableModel(new Object[][] {}, new String[] {"userId", "keyId", "timestamp"});
 		table.setModel(model);
 		addTableMouseListener();
@@ -83,7 +87,6 @@ public class AppMainFrame extends Frame implements ActionListener{
 	
 	private void addTableMouseListener() {
 		table.addMouseListener(new MouseListener() {
-			
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
 				// TODO Auto-generated method stub
@@ -92,7 +95,19 @@ public class AppMainFrame extends Frame implements ActionListener{
 			
 			@Override
 			public void mousePressed(MouseEvent arg0) {
-				// ovde ide za brisanje kljuca 
+				pressedCount ++;
+				
+				if(pressedCount == 2) {
+					pressedCount = 0; 
+					return;
+				}
+				
+				if(pressedCount == 1) {
+					deleteKeyDialog.setValues();
+					deleteKeyDialog.setVisible(true);
+				}
+				//deleteKeyDialog();
+				
 			}
 			
 			@Override
