@@ -1,5 +1,7 @@
 package etf.openpgp.pd180205dtj180023d;
 
+import org.bouncycastle.openpgp.PGPPublicKeyRing;
+
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -11,6 +13,7 @@ public class EncryptionDialog extends Dialog {
     //encryption parameters
     private PGPEncryptor.SymetricKeyAlgorithm symetricKeyAlgorithm;
     private final List<PGPProtocol.PGPOptions> options=new ArrayList<>();
+    private final List<PGPPublicKeyRing> selectedEncryptionKeys=new ArrayList<>();
     private String filename;
 
     //navigation
@@ -25,6 +28,11 @@ public class EncryptionDialog extends Dialog {
     private Checkbox encryption;
     private Checkbox compatibility;
     private FileDialog fd;
+
+
+    public void setEncryptionKeyRings(List<PGPPublicKeyRing> rings){
+        selectedEncryptionKeys.addAll(rings);
+    }
 
     public EncryptionDialog(Frame owner) {
         super(owner,"Encryption", true);
@@ -49,6 +57,7 @@ public class EncryptionDialog extends Dialog {
         compression.setState(false);
         encryption.setState(false);
         compatibility.setState(false);
+        selectedEncryptionKeys.clear();
         index=0;
         filename=null;
     }
@@ -145,18 +154,28 @@ public class EncryptionDialog extends Dialog {
     private class EncryptionPanel extends NavigationPanel{
         private final Checkbox cast5;
         private final Checkbox trides;
+        private ChoosePublicKeysDialog dialog;
 
         public EncryptionPanel() {
-            setLayout(new GridLayout(2,2));
+            setLayout(new GridLayout(2,1));
+            Panel p=new Panel(new GridLayout(3,2));
             Label l=new Label("Select symmetric algorithm:");
             Label labele=new Label();
-            add(l);
-            add(labele);
+            p.add(l);
+            p.add(labele);
             CheckboxGroup radio=new CheckboxGroup();
             cast5=new Checkbox("CAST5/128b",radio,true);
             trides=new Checkbox("3DES/EDE",radio,false);
-            add(cast5);
-            add(trides);
+            p.add(cast5);
+            p.add(trides);
+            add(p);
+            Button choosePublics=new Button("Choose public keys");
+            add(choosePublics);
+            choosePublics.addActionListener(but->{
+                if(dialog==null)dialog=new ChoosePublicKeysDialog(EncryptionDialog.this);
+                dialog.setVisible(true);
+            });
+
         }
         @Override
         public NavigationPanel nextPanel() {
