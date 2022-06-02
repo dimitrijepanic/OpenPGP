@@ -53,9 +53,9 @@ public class ChoosePublicKeysDialog extends Dialog {
         Button choose=new Button("Select public keys");
         choose.addActionListener(button->{
             int[] rows=table.getSelectedRows();
-            ArrayList<PGPPublicKeyRing> selectedRings=new ArrayList<>();
+            ArrayList<MyKeyRing> selectedRings=new ArrayList<>();
             for(int row:rows){
-                selectedRings.add(rings.get(row).getPublicKeyRing());
+                selectedRings.add(rings.get(row));
             }
             ((EncryptionDialog)getParent()).setEncryptionKeyRings(selectedRings);
             setVisible(false);

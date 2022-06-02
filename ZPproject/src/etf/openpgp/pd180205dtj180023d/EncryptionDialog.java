@@ -12,8 +12,8 @@ public class EncryptionDialog extends Dialog {
 
     //encryption parameters
     private PGPEncryptor.SymetricKeyAlgorithm symetricKeyAlgorithm;
-    private final List<PGPProtocol.PGPOptions> options=new ArrayList<>();
-    private final List<PGPPublicKeyRing> selectedEncryptionKeys=new ArrayList<>();
+    private List<PGPProtocol.PGPOptions> options=new ArrayList<>();
+    private List<MyKeyRing> selectedEncryptionKeys=new ArrayList<>();
     private String filename;
 
     //navigation
@@ -30,7 +30,7 @@ public class EncryptionDialog extends Dialog {
     private FileDialog fd;
 
 
-    public void setEncryptionKeyRings(List<PGPPublicKeyRing> rings){
+    public void setEncryptionKeyRings(List<MyKeyRing> rings){
         selectedEncryptionKeys.addAll(rings);
     }
 
@@ -50,14 +50,14 @@ public class EncryptionDialog extends Dialog {
 
     private void reset() {
         symetricKeyAlgorithm=PGPEncryptor.SymetricKeyAlgorithm.CAST5;
-        options.clear();
+        options=new ArrayList<>();
         panels.forEach(p->p.setVisible(false));
         panels.get(0).setVisible(true);
         autentication.setState(false);
         compression.setState(false);
         encryption.setState(false);
         compatibility.setState(false);
-        selectedEncryptionKeys.clear();
+        selectedEncryptionKeys=new ArrayList<>();
         index=0;
         filename=null;
     }
@@ -213,7 +213,7 @@ public class EncryptionDialog extends Dialog {
             nextPanel.setVisible(true);
         }
         else {
-            //pokreni enkripciju
+            PGPProtocol.encrypt(filename,symetricKeyAlgorithm,options,selectedEncryptionKeys);
             setVisible(false);
             reset();
         }
