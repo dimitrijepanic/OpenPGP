@@ -10,7 +10,7 @@ public class Util {
     public static Object[] generateTableRow(MyKeyRing ring){
         PGPPublicKey pk = ring.getPublicKeyRing().getPublicKey();
         String userId = pk.getUserIDs().next() + "";
-        String keyId = pk.getKeyID() + "";
+        String keyId = Long.toUnsignedString(pk.getKeyID());
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         String timestamp = dateFormat.format(pk.getCreationTime());
         return new Object[] {userId, keyId, timestamp};
