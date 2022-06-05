@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import org.bouncycastle.bcpg.ArmoredInputStream;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
@@ -13,26 +15,22 @@ import org.bouncycastle.openpgp.PGPUtil;
 
 public class MyKeyRing {
 
-	private String fileName;
+	private String fileNamePublic;
+	private String fileNamePrivate ;
 	private String shortName;
 	private PGPPublicKeyRing publicKeyRing;
 	private PGPSecretKeyRing secretKeyRing;
 	
 	
-	public MyKeyRing(String fileName, PGPPublicKeyRing publicKeyRing,
+	public MyKeyRing(PGPPublicKeyRing publicKeyRing,
 			PGPSecretKeyRing secretKeyRing) {
 		super();
-		this.fileName = fileName;
 		this.publicKeyRing = publicKeyRing;
 		this.secretKeyRing = secretKeyRing;
+		
+		setDefaultFileName();
 	}
 	
-	public String getFileName() {
-		return fileName;
-	}
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
-	}
 	public String getShortName() {
 		return shortName;
 	}
@@ -52,18 +50,41 @@ public class MyKeyRing {
 		this.secretKeyRing = secretKeyRing;
 	}
 	
+	private void setDefaultFileName() {
+		String timestamp = publicKeyRing.getPublicKey().getCreationTime().getTime() + "";
+		
+		this.fileNamePrivate = "./" +
+				publicKeyRing.getPublicKey().getUserIDs().next() + "_" + timestamp +"_private.asc";
+		this.fileNamePublic = "./" +
+				publicKeyRing.getPublicKey().getUserIDs().next()+ "_" +timestamp  + "_public.asc";
+	}
+	
+	
+	public String getFileNamePublic() {
+		return fileNamePublic;
+	}
+
+	public void setFileNamePublic(String fileNamePublic) {
+		this.fileNamePublic = fileNamePublic;
+	}
+
+	public String getFileNamePrivate() {
+		return fileNamePrivate;
+	}
+
+	public void setFileNamePrivate(String fileNamePrivate) {
+		this.fileNamePrivate = fileNamePrivate;
+	}
+
 	public void writeToFile()  {
-		// samo public za sad da vidim da l ce mi ga lepo ispsiati 
 		try {
-			ArmoredOutputStream out = new ArmoredOutputStream(new FileOutputStream(fileName));
+			// public
+			ArmoredOutputStream out = new ArmoredOutputStream(new FileOutputStream(getFileNamePublic()));
 			publicKeyRing.encode(out);
-//			ArmoredInputStream in = new ArmoredInputStream(new FileInputStream(fileName));
-//			byte[] bytes = new byte[100000];
-//			bytes = in.readAllBytes();
-//			System.out.println(new String(bytes));
-//			InputStream in = PGPUtil.getDecoderStream(new FileInputStream(fileName));
-//			byte[] bytes = in.readAllBytes();
-//			System.out.println(new String(bytes));
+			// private
+			out = new ArmoredOutputStream(new FileOutputStream(getFileNamePrivate()));
+			secretKeyRing.encode(out);
+			
 		}catch(Exception e) {
 			
 		}

@@ -217,20 +217,8 @@ public class AddKeyDialog extends Dialog {
 		PGPPublicKeyRing publicKeyRing = keyRingGen.generatePublicKeyRing();
 		PGPSecretKeyRing secretKeyRing = keyRingGen.generateSecretKeyRing();
 		Iterator<PGPPublicKey> iterator = publicKeyRing.getPublicKeys();
-//		while(iterator.hasNext()) {
-////			System.out.println(iterator.next().isEncryptionKey());
-//		}
-//		
-//		Iterator<PGPSecretKey> iterator1 = secretKeyRing.getSecretKeys();
-//		while(iterator1.hasNext()) {
-////			System.out.println(iterator1.next().isSigningKey());
-//		}
-
-		MyKeyRing myKeyRing = new MyKeyRing("./pana.asc",publicKeyRing, secretKeyRing) ;
+		MyKeyRing myKeyRing = new MyKeyRing(publicKeyRing, secretKeyRing) ;
 		mainFrame.addKeyRing(myKeyRing);
-		myKeyRing.writeToFile();
-		
-		// setuj novi kljuc za potpisivanje
 		closeWindow();
 
 	}

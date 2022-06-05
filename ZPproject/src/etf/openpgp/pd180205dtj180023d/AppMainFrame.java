@@ -37,7 +37,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 	
 	private AddKeyDialog dialog;
 	private EncryptionDialog encryptionDialog;
-	private DeleteKeyDialog deleteKeyDialog;
+	private DeleteExportKeyDialog deleteKeyDialog;
 	private List<MyKeyRing> keyRings = new ArrayList<>();
 	
 	// panels for keys
@@ -64,7 +64,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 		setLocation(400, 50);
 		setLayout(new BorderLayout());
 		fillScreen();
-		deleteKeyDialog = new DeleteKeyDialog(this);
+		deleteKeyDialog = new DeleteExportKeyDialog(this);
 		setVisible(true);
 	}
 	
