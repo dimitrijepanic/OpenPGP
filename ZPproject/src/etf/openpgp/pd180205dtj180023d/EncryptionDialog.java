@@ -1,6 +1,9 @@
 package etf.openpgp.pd180205dtj180023d;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -10,8 +13,11 @@ public class EncryptionDialog extends Dialog {
 
     //encryption parameters
     private PGPEncryptor.SymetricKeyAlgorithm symetricKeyAlgorithm;
-    private final List<PGPProtocol.PGPOptions> options=new ArrayList<>();
+    private List<PGPProtocol.PGPOptions> options=new ArrayList<>();
+    private List<MyKeyRing> selectedEncryptionKeys=new ArrayList<>();
     private String filename;
+    private String password;
+    private MyKeyRing signatureKey;
 
     //navigation
     private final java.util.List<NavigationPanel> panels=new ArrayList<>();
@@ -25,6 +31,15 @@ public class EncryptionDialog extends Dialog {
     private Checkbox encryption;
     private Checkbox compatibility;
     private FileDialog fd;
+
+
+    public void setEncryptionKeyRings(List<MyKeyRing> rings){
+        selectedEncryptionKeys.addAll(rings);
+    }
+
+    public void setSignatureKeyRing(MyKeyRing ring){
+        signatureKey=ring;
+    }
 
     public EncryptionDialog(Frame owner) {
         super(owner,"Encryption", true);
@@ -42,15 +57,17 @@ public class EncryptionDialog extends Dialog {
 
     private void reset() {
         symetricKeyAlgorithm=PGPEncryptor.SymetricKeyAlgorithm.CAST5;
-        options.clear();
+        options=new ArrayList<>();
         panels.forEach(p->p.setVisible(false));
         panels.get(0).setVisible(true);
         autentication.setState(false);
         compression.setState(false);
         encryption.setState(false);
         compatibility.setState(false);
+        selectedEncryptionKeys=new ArrayList<>();
         index=0;
         filename=null;
+        password=null;
     }
 
     private void fillScreen(){
@@ -145,18 +162,28 @@ public class EncryptionDialog extends Dialog {
     private class EncryptionPanel extends NavigationPanel{
         private final Checkbox cast5;
         private final Checkbox trides;
+        private ChooseKeysDialog dialog;
 
         public EncryptionPanel() {
-            setLayout(new GridLayout(2,2));
+            setLayout(new GridLayout(2,1));
+            Panel p=new Panel(new GridLayout(3,2));
             Label l=new Label("Select symmetric algorithm:");
             Label labele=new Label();
-            add(l);
-            add(labele);
+            p.add(l);
+            p.add(labele);
             CheckboxGroup radio=new CheckboxGroup();
             cast5=new Checkbox("CAST5/128b",radio,true);
             trides=new Checkbox("3DES/EDE",radio,false);
-            add(cast5);
-            add(trides);
+            p.add(cast5);
+            p.add(trides);
+            add(p);
+            Button choosePublics=new Button("Choose public keys");
+            add(choosePublics);
+            choosePublics.addActionListener(but->{
+                if(dialog==null)dialog=new ChooseKeysDialog(EncryptionDialog.this, true);
+                dialog.setVisible(true);
+            });
+
         }
         @Override
         public NavigationPanel nextPanel() {
@@ -167,13 +194,28 @@ public class EncryptionDialog extends Dialog {
     }
 
     private class AuthenticationPanel extends NavigationPanel{
+        private ChooseKeysDialog dialog;
+        private JPasswordField t;
         public AuthenticationPanel() {
-            Label l=new Label("Autentication");
-            add(l);
+            setLayout(new GridLayout(2,1));
+            Panel p=new Panel();
+            Label l= new Label("Password");
+            p.add(l);
+            t=new JPasswordField(10);
+            p.add(t);
+            add(p);
+            Button b=new Button("Choose private key");
+            add(b);
+            b.addActionListener(button->{
+                if(dialog==null)dialog=new ChooseKeysDialog(EncryptionDialog.this, false);
+                dialog.setVisible(true);
+            });
+
         }
 
         @Override
         public NavigationPanel nextPanel() {
+            password=String.copyValueOf(t.getPassword());
             if(encryption.getState()) {
                 encryption.setState(false);
                 index++;
@@ -194,7 +236,7 @@ public class EncryptionDialog extends Dialog {
             nextPanel.setVisible(true);
         }
         else {
-            //pokreni enkripciju
+            PGPProtocol.encrypt(filename,symetricKeyAlgorithm,options,selectedEncryptionKeys,signatureKey,password);
             setVisible(false);
             reset();
         }

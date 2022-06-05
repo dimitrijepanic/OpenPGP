@@ -52,7 +52,10 @@ public class AppMainFrame extends Frame implements ActionListener{
 			dispose();
 		}
 	}
-	
+
+	public List<MyKeyRing> getKeyRings(){
+		return keyRings;
+	}
 
 	public AppMainFrame() {
 		super("Projekat ZP");
@@ -156,14 +159,9 @@ public class AppMainFrame extends Frame implements ActionListener{
 	public void addKeyRing(MyKeyRing keyRing) {
 		keyRings.add(keyRing);
 		DefaultTableModel model = (DefaultTableModel) (table.getModel());
-		PGPPublicKey pk = keyRing.getPublicKeyRing().getPublicKey();
-		String userId = pk.getUserIDs().next() + "";
-		String keyId = pk.getKeyID() + "";
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");  
-		String timestamp = dateFormat.format(pk.getCreationTime());
-		model.addRow(new Object[] {userId, keyId, timestamp});
+		model.addRow(Util.generateTableRow(keyRing));
 	}
-	
+
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
