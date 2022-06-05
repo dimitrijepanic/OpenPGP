@@ -51,7 +51,6 @@ public class DeleteExportKeyDialog extends Dialog {
 			
 		});
 		b2.addActionListener(b->{
-			System.out.println("ok");
 			keyRing.writeToFile();
 			Dialog resultDialog = new Dialog(mainFrame, true);
 			resultDialog.addWindowListener(new WindowAdapter() {

@@ -81,10 +81,11 @@ public class MyKeyRing {
 			// public
 			ArmoredOutputStream out = new ArmoredOutputStream(new FileOutputStream(getFileNamePublic()));
 			publicKeyRing.encode(out);
+			out.close();
 			// private
 			out = new ArmoredOutputStream(new FileOutputStream(getFileNamePrivate()));
 			secretKeyRing.encode(out);
-			
+			out.close();
 		}catch(Exception e) {
 			
 		}

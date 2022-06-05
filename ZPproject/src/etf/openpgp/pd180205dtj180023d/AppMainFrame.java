@@ -35,10 +35,12 @@ import org.bouncycastle.openpgp.PGPPublicKey;
 
 public class AppMainFrame extends Frame implements ActionListener{
 	
+	// dialogs
 	private AddKeyDialog dialog;
 	private EncryptionDialog encryptionDialog;
 	private DeleteExportKeyDialog deleteKeyDialog;
 	private List<MyKeyRing> keyRings = new ArrayList<>();
+	private ImportKeyDialog importKeyDialog ;
 	
 	// panels for keys
 	private Panel keyPanel;
@@ -138,17 +140,27 @@ public class AppMainFrame extends Frame implements ActionListener{
 		encryptionItem.setLabel("Encrypt");
 		MenuItem dialogItem = new MenuItem();
 		dialogItem.setLabel("Add Key");
+		MenuItem importItem = new MenuItem();
+		importItem.setLabel("Import Key");
 		menu.add(dialogItem);
 		menu.add(encryptionItem);
+		menu.add(importItem);
 		menu.setFont(new Font("Serif", Font.BOLD, 15));
 		encryptionItem.setFont(new Font("Serif", Font.BOLD, 15));
 		encryptionItem.addActionListener(item->{
 			if(encryptionDialog==null) encryptionDialog=new EncryptionDialog(this);
 			encryptionDialog.setVisible(true);
 		});
+		
 		dialogItem.addActionListener(b->{
 			if(dialog == null) dialog = new AddKeyDialog(this);
 			dialog.setVisible(true);
+		});
+		
+		importItem.addActionListener(item->{
+			if(importKeyDialog==null) importKeyDialog=new ImportKeyDialog(this);
+			importKeyDialog.setAll();
+			importKeyDialog.setVisible(true);
 		});
 		menu.setLabel("Options");
 		menuBar.add(menu);
