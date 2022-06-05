@@ -217,14 +217,14 @@ public class AddKeyDialog extends Dialog {
 		PGPPublicKeyRing publicKeyRing = keyRingGen.generatePublicKeyRing();
 		PGPSecretKeyRing secretKeyRing = keyRingGen.generateSecretKeyRing();
 		Iterator<PGPPublicKey> iterator = publicKeyRing.getPublicKeys();
-		while(iterator.hasNext()) {
-			System.out.println(iterator.next().isEncryptionKey());
-		}
-		
-		Iterator<PGPSecretKey> iterator1 = secretKeyRing.getSecretKeys();
-		while(iterator1.hasNext()) {
-			System.out.println(iterator1.next().isSigningKey());
-		}
+//		while(iterator.hasNext()) {
+////			System.out.println(iterator.next().isEncryptionKey());
+//		}
+//		
+//		Iterator<PGPSecretKey> iterator1 = secretKeyRing.getSecretKeys();
+//		while(iterator1.hasNext()) {
+////			System.out.println(iterator1.next().isSigningKey());
+//		}
 
 		MyKeyRing myKeyRing = new MyKeyRing("./pana.asc",publicKeyRing, secretKeyRing) ;
 		mainFrame.addKeyRing(myKeyRing);

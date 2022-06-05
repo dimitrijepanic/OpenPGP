@@ -103,10 +103,9 @@ public class AppMainFrame extends Frame implements ActionListener{
 				}
 				
 				if(pressedCount == 1) {
-					deleteKeyDialog.setValues();
+					deleteKeyDialog.setValues(keyRings.get(table.getSelectedRow()), table.getSelectedRow());
 					deleteKeyDialog.setVisible(true);
 				}
-				//deleteKeyDialog();
 				
 			}
 			
@@ -170,5 +169,14 @@ public class AppMainFrame extends Frame implements ActionListener{
 	public void actionPerformed(ActionEvent arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public void removeRow(int i) {
+		if(i >= 0 && i < table.getRowCount()) {
+			DefaultTableModel model = (DefaultTableModel) (table.getModel());
+			model.removeRow(0);
+			keyRings.remove(i);
+		}
+
 	}
 }
