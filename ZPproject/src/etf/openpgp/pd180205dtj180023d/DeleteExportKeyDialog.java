@@ -48,10 +48,22 @@ public class DeleteExportKeyDialog extends Dialog {
 		b1.addActionListener(b->{
 			mainFrame.removeRow(id);
 			setVisible(false);
+			
 		});
 		b2.addActionListener(b->{
 			System.out.println("ok");
 			keyRing.writeToFile();
+			Dialog resultDialog = new Dialog(mainFrame, true);
+			resultDialog.addWindowListener(new WindowAdapter() {
+				public void windowClosing(WindowEvent we) {
+					resultDialog.setVisible(false);
+				}
+			});
+			resultDialog.setTitle("Result");
+			resultDialog.setLocation(600, 250);
+			resultDialog.add(new Label("\t\t\t\t Success! \t\t\t\t"));
+			resultDialog.setVisible(true);
+
 		});
 	}
 	
