@@ -3,6 +3,7 @@ package etf.openpgp.pd180205dtj180023d;
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
@@ -46,6 +47,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 	private Panel keyPanel;
 	private JScrollPane p1;
 	private JTable table;
+	private JTable privateKeyTable;
 	
 	// press count
 	private int pressedCount = 0;
@@ -81,17 +83,65 @@ public class AppMainFrame extends Frame implements ActionListener{
 		
 		keyPanel = new Panel();
 		table = new JTable();
+		privateKeyTable = new JTable();
 		addTableMouseListener();
 		DefaultTableModel model = new DefaultTableModel(new Object[][] {}, new String[] {"userId", "keyId", "timestamp"});
+		DefaultTableModel model2 = new DefaultTableModel(new Object[][] {}, new String[] {"userId", "keyId", "timestamp"});
 		table.setModel(model);
+		privateKeyTable.setModel(model2);
 		addTableMouseListener();
 		p1 = new JScrollPane(table);
+		p1.setPreferredSize(new Dimension(400, 250));
 		keyPanel.add(p1);
+		JScrollPane p2 = new JScrollPane(privateKeyTable);
+		p2.setPreferredSize(new Dimension(400, 250));
+		keyPanel.add(p2);
 		add(keyPanel, BorderLayout.CENTER);
 	}
 	
 	private void addTableMouseListener() {
 		table.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				pressedCount ++;
+				
+				if(pressedCount == 2) {
+					pressedCount = 0; 
+					return;
+				}
+				
+				if(pressedCount == 1) {
+					deleteKeyDialog.setValues(keyRings.get(table.getSelectedRow()), table.getSelectedRow());
+					deleteKeyDialog.setVisible(true);
+				}
+				
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		privateKeyTable.addMouseListener(new MouseListener() {
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
 				// TODO Auto-generated method stub
@@ -172,6 +222,8 @@ public class AppMainFrame extends Frame implements ActionListener{
 		keyRings.add(keyRing);
 		DefaultTableModel model = (DefaultTableModel) (table.getModel());
 		model.addRow(Util.generateTableRow(keyRing));
+		DefaultTableModel model2 = (DefaultTableModel) (privateKeyTable.getModel());
+		model2.addRow(Util.generateTableRow(keyRing));
 	}
 
 
@@ -184,7 +236,9 @@ public class AppMainFrame extends Frame implements ActionListener{
 	public void removeRow(int i) {
 		if(i >= 0 && i < table.getRowCount()) {
 			DefaultTableModel model = (DefaultTableModel) (table.getModel());
-			model.removeRow(0);
+			DefaultTableModel model2 = (DefaultTableModel) (privateKeyTable.getModel());
+			model.removeRow(i);
+			model2.removeRow(i);
 			keyRings.remove(i);
 		}
 

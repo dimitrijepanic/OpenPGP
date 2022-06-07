@@ -73,9 +73,6 @@ public class AddKeyDialog extends Dialog {
 	TextField tx1 = new TextField(10);
 	TextField tx2 = new TextField(10);
 	Choice ch = new Choice();
-	
-	// master key for user - used to sign the subkey
-	private Map<String, AsymmetricCipherKeyPair> masterKeyMap = new HashMap<>();
 
 	// values for RSA - certainty
 	// BigInteger default values is 65537, removed from library
@@ -86,6 +83,8 @@ public class AddKeyDialog extends Dialog {
 	// things that the same for all key generators
 	private static BcPBESecretKeyEncryptorBuilder encryptor = 
 			new BcPBESecretKeyEncryptorBuilder(0x0d);
+	
+	
 	public AddKeyDialog(Frame frame) {
 		super(frame, "Add Key", true);
 		this.mainFrame = (AppMainFrame) frame;
@@ -185,19 +184,16 @@ public class AddKeyDialog extends Dialog {
 
 	private void generateKey() {
 
-		// sredi ovo znas kako sve ok!
 		RSAKeyPairGenerator generator = new RSAKeyPairGenerator();
 		generator.init(getRSAParams(getKeySize()));
 
-		// za potpisivanje kljuceva
-		PGPKeyPair masterKeyPair = getMasterKeyPair(this.username, this.algorithm, generator);
+		PGPKeyPair masterKeyPair = getKeyPair(this.username, this.algorithm, generator);
 		
-		// how to encrypt the secret key
-		// izdvoji kao static polje
-		PBESecretKeyEncryptor pske = encryptor
-				.build(this.password.toCharArray());
+		if(masterKeyPair == null) {
+			this.errorString = "Can't generate keys..";
+			return;
+		}
 
-		// 0x13 certification forwarding
 		PGPKeyRingGenerator keyRingGen = null;
 		try {
 			keyRingGen = new PGPKeyRingGenerator(
@@ -207,18 +203,19 @@ public class AddKeyDialog extends Dialog {
 					null, 
 					null, 
 					null,
-					new BcPGPContentSignerBuilder(masterKeyPair.getPublicKey().getAlgorithm(), HashAlgorithmTags.SHA1),
-					pske);
+					new BcPGPContentSignerBuilder(1, 1),
+					encryptor.build(this.password.toCharArray()));
 		} catch (PGPException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		PGPPublicKeyRing publicKeyRing = keyRingGen.generatePublicKeyRing();
-		PGPSecretKeyRing secretKeyRing = keyRingGen.generateSecretKeyRing();
-		Iterator<PGPPublicKey> iterator = publicKeyRing.getPublicKeys();
-		MyKeyRing myKeyRing = new MyKeyRing(publicKeyRing, secretKeyRing) ;
-		mainFrame.addKeyRing(myKeyRing);
+		// generate key and add to main window
+		mainFrame.addKeyRing(new MyKeyRing(
+				keyRingGen.generatePublicKeyRing(), 
+				keyRingGen.generateSecretKeyRing()
+				));
+		
 		closeWindow();
 
 	}
@@ -230,10 +227,12 @@ public class AddKeyDialog extends Dialog {
 	}
 
 	// generisi master kljuc ako ne postoji
-	private PGPKeyPair getMasterKeyPair(String username, String algorithm, RSAKeyPairGenerator generator) {
+	private PGPKeyPair getKeyPair(String username, String algorithm, RSAKeyPairGenerator generator) {
 		
 		try {
-			return new BcPGPKeyPair(PGPPublicKey.RSA_GENERAL, generator.generateKeyPair(), new Date());
+			return new BcPGPKeyPair(PGPPublicKey.RSA_GENERAL, 
+					generator.generateKeyPair(), 
+					new Date());
 		} catch (PGPException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -246,7 +245,10 @@ public class AddKeyDialog extends Dialog {
 	// strength je broj bita na koliko se generise
 	// secure random sluzi da se zastiti privatna vrednost kljuca da se ne bi videla
 	private RSAKeyGenerationParameters getRSAParams(int strength) {
-		return new RSAKeyGenerationParameters(publicExponent, new SecureRandom(), strength, certainty);
+		return new RSAKeyGenerationParameters(publicExponent, 
+				new SecureRandom(), 
+				strength, 
+				certainty);
 	}
 
 	private int getKeySize() {
