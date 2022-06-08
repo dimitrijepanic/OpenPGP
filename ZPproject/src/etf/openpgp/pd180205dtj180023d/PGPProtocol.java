@@ -39,7 +39,7 @@ public class PGPProtocol {
     public static List<PGPSecretKey> getSecretKeys(List<MyKeyRing> rings) throws PGPException {
         return rings.stream().map(ring-> ring.getSecretKeyRing().getSecretKey()).collect(Collectors.toList());
     }
-    public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorithm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password){
+    public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorithm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password) throws PGPException {
         try(OutputStream output=new FileOutputStream(new File(inputFile+"_encrypted.pgp")))
         {
             InputStream input=new FileInputStream(new File(inputFile));
@@ -80,14 +80,17 @@ public class PGPProtocol {
             }
             if(output!=comout)comout.close();
         }
+        catch (PGPException e){
+            throw new PGPException(e.getMessage());
+        }
         catch(Exception e){
-            System.err.println(e);
+            throw new PGPException(e+"");
         }
 
     }
 
 
-    public static void decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback){
+    public static void decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
         String outputFile=inputFile.replaceAll("_encrypted.pgp","_decrypted.txt");
         try(OutputStream output=new FileOutputStream(new File(outputFile)))
         {
@@ -103,8 +106,7 @@ public class PGPProtocol {
                 if(header instanceof PGPEncryptedDataList){
                     PGPEncryptor.DecriptionOutput decOut=PGPEncryptor.executeDecryption((PGPEncryptedDataList)header, getSecretKeys(keyRings),callback);
                     if(decOut.mssg!=null){
-                        //ispisi poruku
-                        break;
+                        throw new Exception(decOut.mssg);
                     }
                     factory=new PGPObjectFactory(decOut.plainText, new BcKeyFingerprintCalculator());
                     it=factory.iterator();
@@ -123,15 +125,14 @@ public class PGPProtocol {
                 if (header instanceof PGPSignatureList) {
                     PGPAuthenticator.ValidationOutput out=PGPAuthenticator.validate(onePassHeader,(PGPSignatureList)header, getPublicKeys(keyRings),content);
                     if(out.msg!=null){
-                        //ispisi poruku
-                        break;
+                        throw new Exception(out.msg);
                     }
                     System.out.println(out.key.getUserIDs().next());
                 }
             }
         }
         catch(Exception e){
-            System.err.println(e);
+            throw new PGPException(e.getMessage());
         }
     }
 

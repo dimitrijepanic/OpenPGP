@@ -12,6 +12,7 @@ public class DecryptionDialog extends Dialog {
     private FileDialog fd;
     private String filename;
     private String selectedPassword;
+    Label l=new Label();
     Label label=new Label();
 
     public DecryptionDialog(Frame owner) {
@@ -22,18 +23,20 @@ public class DecryptionDialog extends Dialog {
                 reset();
             }
         });
-        setSize(300, 200);
-        setLocation(550, 200);
+        setSize(400, 200);
+        setLocation(500, 200);
         setLayout(new GridLayout(4,2,10,10));
         fillScreen();
     }
 
     private void fillScreen(){
         setFont(new Font("Serif", Font.PLAIN, 15));
-        Panel p=new Panel(new GridLayout(2,1));
+        Panel p=new Panel(new GridLayout(3,1));
         setLayout(new BorderLayout());
         add(p,BorderLayout.NORTH);
         Button choose=new Button("Choose file to decrypt");
+        l.setFont(new Font("Serif", Font.PLAIN, 15));
+        l.setForeground(Color.RED);
         choose.addActionListener(b->{
             if(fd==null) {
                 fd=new FileDialog(this);
@@ -44,15 +47,21 @@ public class DecryptionDialog extends Dialog {
         });
         Button decrypt=new Button("decrypt");
         decrypt.addActionListener(button->{
-            PGPProtocol.decrypt(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
-                PasswordDialog dialog=new PasswordDialog(DecryptionDialog.this,key);
-                dialog.setVisible(true);
-                return selectedPassword;
-            });
+            try {
+                PGPProtocol.decrypt(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
+                    PasswordDialog dialog=new PasswordDialog(DecryptionDialog.this,key);
+                    dialog.setVisible(true);
+                    return selectedPassword;
+                });
+                DecryptionDialog.this.setVisible(false);
+            } catch (PGPException e) {
+                l.setText("ERROR:"+ e.getMessage());
+            }
         });
         add(decrypt, BorderLayout.SOUTH);
         p.add(choose);
         p.add(label);
+        p.add(l);
     }
 
     public class PasswordDialog extends Dialog{
@@ -94,5 +103,6 @@ public class DecryptionDialog extends Dialog {
         filename=null;
         label.setText("");
         selectedPassword=null;
+        l.setText("");
     }
 }

@@ -34,7 +34,7 @@ public class PGPEncryptor {
         }
     }
 
-    public static List<OutputStream> configureEncryption(SymetricKeyAlgorithm algorythm, List<PGPPublicKey> publicKeys, OutputStream stream) throws IOException, PGPException {
+    public static List<OutputStream> configureEncryption(SymetricKeyAlgorithm algorythm, List<PGPPublicKey> publicKeys, OutputStream stream) throws IOException, PGPException, org.bouncycastle.openpgp.PGPException {
         BcPGPDataEncryptorBuilder builder=new BcPGPDataEncryptorBuilder(algorythm.map());
         builder.setSecureRandom(new SecureRandom());
         builder.setWithIntegrityPacket(true);
@@ -52,25 +52,33 @@ public class PGPEncryptor {
         String mssg;
     }
 
-    public static DecriptionOutput executeDecryption(PGPEncryptedDataList header, List<PGPSecretKey> secrets, PGPProtocol.Callback callback) throws IOException, PGPException {
+    public static DecriptionOutput executeDecryption(PGPEncryptedDataList header, List<PGPSecretKey> secrets, PGPProtocol.Callback callback) {
         DecriptionOutput output=new DecriptionOutput();
         Iterator<PGPEncryptedData> encryptedData = header.getEncryptedDataObjects();
         if (encryptedData.hasNext()){
             PGPPublicKeyEncryptedData data=(PGPPublicKeyEncryptedData)encryptedData.next();
             PGPSecretKey secretKey=secrets.stream().filter(key->key.getKeyID()==data.getKeyID()).findFirst().orElse(null);
             if(secretKey==null){
-                output.mssg="no secret keys with id: "+data.getKeyID();
+                output.mssg="no secret keys with id: "+Long.toUnsignedString(data.getKeyID());
                 return output;
             }
             String password=callback.call(secretKey);
             PBESecretKeyDecryptor decryptor = new BcPBESecretKeyDecryptorBuilder(new BcPGPDigestCalculatorProvider())
                     .build(password.toCharArray());
-            PGPPrivateKey key=secretKey.extractPrivateKey(decryptor);
-            if(key==null) {
-                output.mssg="passphrase for key with id "+ data.getKeyID()+" not valid";
+
+            PGPPrivateKey key= null;
+            try {
+                key = secretKey.extractPrivateKey(decryptor);
+                if(key==null) {
+                    output.mssg="passphrase for key with id "+ Long.toUnsignedString(data.getKeyID())+" not valid";
+                    return output;
+                }
+                output.plainText=data.getDataStream(new BcPublicKeyDataDecryptorFactory(key));
+            } catch (org.bouncycastle.openpgp.PGPException e) {
+                output.mssg="passphrase for key with id "+ Long.toUnsignedString(data.getKeyID())+" not valid";
                 return output;
             }
-            output.plainText=data.getDataStream(new BcPublicKeyDataDecryptorFactory(key));
+
         }
         return output;
     }
