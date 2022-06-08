@@ -188,11 +188,14 @@ public class AppMainFrame extends Frame implements ActionListener{
 		Menu menu=new Menu();
 		MenuItem encryptionItem=new MenuItem();
 		encryptionItem.setLabel("Encrypt");
+		MenuItem decryptionItem=new MenuItem();
+		decryptionItem.setLabel("Decrypt");
 		MenuItem dialogItem = new MenuItem();
 		dialogItem.setLabel("Add Key");
 		MenuItem importItem = new MenuItem();
 		importItem.setLabel("Import Key");
 		menu.add(dialogItem);
+		menu.add(decryptionItem);
 		menu.add(encryptionItem);
 		menu.add(importItem);
 		menu.setFont(new Font("Serif", Font.BOLD, 15));
@@ -200,6 +203,10 @@ public class AppMainFrame extends Frame implements ActionListener{
 		encryptionItem.addActionListener(item->{
 			if(encryptionDialog==null) encryptionDialog=new EncryptionDialog(this);
 			encryptionDialog.setVisible(true);
+		});
+		decryptionItem.setFont(new Font("Serif", Font.BOLD, 15));
+		decryptionItem.addActionListener(item->{
+			PGPProtocol.decrypt("D:\\GIT_projekti\\ZPproject\\proba2.txt_encrypted.pgp","jana", keyRings);
 		});
 		
 		dialogItem.addActionListener(b->{

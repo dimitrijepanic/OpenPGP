@@ -9,12 +9,15 @@ import org.bouncycastle.openpgp.operator.bc.BcPGPContentVerifierBuilderProvider;
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyDataDecryptorFactory;
 import org.bouncycastle.util.io.Streams;
 
+import javax.crypto.SecretKey;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PGPProtocol {
@@ -29,8 +32,11 @@ public class PGPProtocol {
         return rings.stream().map(ring-> ring.getPublicKeyRing().getPublicKey()).collect(Collectors.toList());
     }
 
+    public static List<PGPSecretKey> getSecretKeys(List<MyKeyRing> rings) throws PGPException {
+        return rings.stream().map(ring-> ring.getSecretKeyRing().getSecretKey()).collect(Collectors.toList());
+    }
     public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorythm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password){
-        try(OutputStream output=new FileOutputStream(new File(inputFile+".pgp")))
+        try(OutputStream output=new FileOutputStream(new File(inputFile+"_encrypted.pgp")))
         {
             InputStream input=new FileInputStream(new File(inputFile));
             List<PGPPublicKey> publicKeys=getPublicKeys(publicKeyRings);
@@ -68,6 +74,35 @@ public class PGPProtocol {
             System.err.println(e);
         }
 
+    }
+
+
+    public static void decrypt(String inputFile, String pass, List<MyKeyRing> keyRings){
+        String outputFile=inputFile.replaceAll("_encrypted.pgp","_decrypted.txt");
+        try(OutputStream output=new FileOutputStream(new File(outputFile)))
+        {
+            InputStream input = new FileInputStream(new File(inputFile));
+            //skida Armour !!!
+            PGPObjectFactory factory = new PGPObjectFactory(PGPUtil.getDecoderStream(input), new BcKeyFingerprintCalculator());
+            Iterator<Object> it=factory.iterator();
+            while(it.hasNext()){
+                Object header=it.next();
+                System.out.println(header.getClass());
+                if(header instanceof PGPEncryptedDataList){
+                    PGPEncryptor.DecriptionOutput decOut=PGPEncryptor.executeDecryption((PGPEncryptedDataList)header, getSecretKeys(keyRings),pass);
+                    if(decOut.mssg!=null){
+                        //ispisi poruku
+                        break;
+                    }
+                    factory=new PGPObjectFactory(decOut.plainText, new BcKeyFingerprintCalculator());
+                    it=factory.iterator();
+                }
+            }
+
+        }
+        catch(Exception e){
+            System.err.println(e);
+        }
     }
 
 }
