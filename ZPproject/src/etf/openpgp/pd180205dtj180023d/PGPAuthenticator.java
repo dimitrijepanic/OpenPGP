@@ -50,7 +50,7 @@ public class PGPAuthenticator {
         generator.update(buffer,0,size);
     }
 
-    public static void encode(OutputStream os) throws PGPException, IOException, org.bouncycastle.openpgp.PGPException {
+    public static void encode(OutputStream os) throws IOException, org.bouncycastle.openpgp.PGPException {
         generator.generate().encode(os);
     }
 

@@ -72,7 +72,7 @@ public class DecryptionDialog extends Dialog {
         p.add(l);
     }
 
-    public class PasswordDialog extends Dialog{
+    private class PasswordDialog extends Dialog{
         public PasswordDialog(Dialog owner, PGPSecretKey key) {
             super(owner, "Enter password");
             setModal(true);
@@ -107,7 +107,7 @@ public class DecryptionDialog extends Dialog {
         }
     }
 
-    public void reset(){
+    private void reset(){
         filename=null;
         label.setText("");
         selectedPassword=null;
