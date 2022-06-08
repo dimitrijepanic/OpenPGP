@@ -91,4 +91,19 @@ public class MyKeyRing {
 		}
 	}
 	
+	
+	public void saveKey(String fileName) {
+		try {
+			// public
+			ArmoredOutputStream out = new ArmoredOutputStream(new FileOutputStream(fileName + "_public.asc"));
+			publicKeyRing.encode(out);
+			out.close();
+			// private
+			out = new ArmoredOutputStream(new FileOutputStream(fileName + "_private.asc"));
+			secretKeyRing.encode(out);
+			out.close();
+		}catch(Exception e) {
+			
+		}
+	}
 }

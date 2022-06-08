@@ -20,6 +20,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,7 +37,12 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import org.bouncycastle.bcpg.ArmoredInputStream;
 import org.bouncycastle.openpgp.PGPPublicKey;
+import org.bouncycastle.openpgp.PGPPublicKeyRing;
+import org.bouncycastle.openpgp.PGPSecretKeyRing;
+import org.bouncycastle.openpgp.bc.BcPGPPublicKeyRing;
+import org.bouncycastle.openpgp.bc.BcPGPSecretKeyRing;
 
 
 public class AppMainFrame extends Frame implements ActionListener{
@@ -53,6 +64,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 	private int pressedCount = 0;
 	class WindowClosingAdapter extends WindowAdapter{
 		public void windowClosing(WindowEvent we) {
+			saveKeys();
 			dispose();
 		}
 	}
@@ -69,6 +81,12 @@ public class AppMainFrame extends Frame implements ActionListener{
 		setLayout(new BorderLayout());
 		fillScreen();
 		deleteKeyDialog = new DeleteExportKeyDialog(this);
+		try {
+			loadKeys();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			// problem sa kljucevima
+		}
 		setVisible(true);
 	}
 	
@@ -97,6 +115,42 @@ public class AppMainFrame extends Frame implements ActionListener{
 		p2.setPreferredSize(new Dimension(400, 250));
 		keyPanel.add(p2);
 		add(keyPanel, BorderLayout.CENTER);
+	}
+	
+	private void saveKeys() {
+		int numOfKeys = keyRings.size();
+		String setupFile = "./savedkeys/setup.txt";
+		try {
+			FileWriter out = new FileWriter(setupFile);
+			out.write(numOfKeys + "");
+			out.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		
+		for(int i = 0; i < keyRings.size(); i++) {
+			String fileName = "./savedkeys/" + i ;
+			keyRings.get(i).saveKey(fileName);
+		}
+	}
+	
+	private void loadKeys() throws Exception{
+		int numOfKeys;
+		
+		FileReader in = new FileReader("./savedkeys/setup.txt");
+		numOfKeys = in.read();
+		in.close();
+		
+		for(int i = 0; i < numOfKeys; i++) {
+			ArmoredInputStream ain = new ArmoredInputStream(new FileInputStream("./savedkeys/"+i + "_public.asc"));
+			PGPPublicKeyRing pk = new BcPGPPublicKeyRing(ain);
+			ain.close();
+			ain = new ArmoredInputStream(new FileInputStream("./savedkeys/"+i + "_private.asc"));
+			PGPSecretKeyRing pk2 = new BcPGPSecretKeyRing(ain);
+			ain.close();
+			addKeyRing(new MyKeyRing(pk, pk2));
+		}
 	}
 	
 	private void addTableMouseListener() {
