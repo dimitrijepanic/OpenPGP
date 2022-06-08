@@ -31,6 +31,7 @@ public class EncryptionDialog extends Dialog {
     private Checkbox encryption;
     private Checkbox compatibility;
     private FileDialog fd;
+    private Label l;
 
 
     public void setEncryptionKeyRings(List<MyKeyRing> rings){
@@ -68,6 +69,8 @@ public class EncryptionDialog extends Dialog {
         index=0;
         filename=null;
         password=null;
+        l.setText("");
+
     }
 
     private void fillScreen(){
@@ -85,7 +88,11 @@ public class EncryptionDialog extends Dialog {
         next.addActionListener(button->{
             navigate();
         });
-        bottom.add(next,BorderLayout.CENTER);
+
+        bottom.add(next,BorderLayout.SOUTH);
+        l=new Label();
+        l.setForeground(Color.RED);
+        bottom.add(l,BorderLayout.CENTER);
         add(content, BorderLayout.NORTH);
         add(bottom,BorderLayout.SOUTH);
 
@@ -98,6 +105,7 @@ public class EncryptionDialog extends Dialog {
     }
 
     private class InitialPanel extends NavigationPanel{
+        private Label loadedFile;
         public InitialPanel() {
             setLayout(new GridLayout(4,2));
             Label label=new Label("Choose options: ");
@@ -114,7 +122,7 @@ public class EncryptionDialog extends Dialog {
             encryption.addItemListener(e->{
                 changeNextLabel();
             });
-            Label loadedFile=new Label();
+            loadedFile=new Label();
             Button filebutton=new Button("Choose file to encrypt");
             filebutton.addActionListener(b->{
                 if(fd==null) {
@@ -143,6 +151,7 @@ public class EncryptionDialog extends Dialog {
         @Override
         public NavigationPanel nextPanel() {
             setSelectedOptions();
+            loadedFile.setText("");
             if(autentication.getState()) {
                 index++;
                 autentication.setState(false);
@@ -216,6 +225,7 @@ public class EncryptionDialog extends Dialog {
         @Override
         public NavigationPanel nextPanel() {
             password=String.copyValueOf(t.getPassword());
+            t.setText("");
             if(encryption.getState()) {
                 encryption.setState(false);
                 index++;
@@ -231,14 +241,21 @@ public class EncryptionDialog extends Dialog {
 
     private void navigate(){
         panels.forEach(p->p.setVisible(false));
+        Panel current=panels.get(index);
         NavigationPanel nextPanel=panels.get(index).nextPanel();
         if(nextPanel!=null){
             nextPanel.setVisible(true);
         }
         else {
-            PGPProtocol.encrypt(filename,symetricKeyAlgorithm,options,selectedEncryptionKeys,signatureKey,password);
-            setVisible(false);
-            reset();
+            try{
+                PGPProtocol.encrypt(filename,symetricKeyAlgorithm,options,selectedEncryptionKeys,signatureKey,password);
+                setVisible(false);
+                reset();
+            }
+            catch (Exception e){
+                current.setVisible(true);
+                l.setText(e.getMessage());
+            }
         }
     }
 

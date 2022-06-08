@@ -9,12 +9,15 @@ import org.bouncycastle.openpgp.operator.bc.BcPGPContentVerifierBuilderProvider;
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyDataDecryptorFactory;
 import org.bouncycastle.util.io.Streams;
 
+import javax.crypto.SecretKey;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PGPProtocol {
@@ -24,13 +27,20 @@ public class PGPProtocol {
         AUTENTICATION, ENCRYPTION, COMPRESSION, COMPATIBILITY
     }
 
+    public static interface Callback{
+        String call(PGPSecretKey key);
+    }
+
     //add params
     public static List<PGPPublicKey> getPublicKeys(List<MyKeyRing> rings) throws PGPException {
         return rings.stream().map(ring-> ring.getPublicKeyRing().getPublicKey()).collect(Collectors.toList());
     }
 
-    public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorythm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password){
-        try(OutputStream output=new FileOutputStream(new File(inputFile+".pgp")))
+    public static List<PGPSecretKey> getSecretKeys(List<MyKeyRing> rings) throws PGPException {
+        return rings.stream().map(ring-> ring.getSecretKeyRing().getSecretKey()).collect(Collectors.toList());
+    }
+    public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorithm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password) throws PGPException {
+        try(OutputStream output=new FileOutputStream(new File(inputFile+"_encrypted.pgp")))
         {
             InputStream input=new FileInputStream(new File(inputFile));
             List<PGPPublicKey> publicKeys=getPublicKeys(publicKeyRings);
@@ -39,8 +49,10 @@ public class PGPProtocol {
                 comout=new ArmoredOutputStream(output);
             }
             OutputStream enout=comout;
+            List<OutputStream> outs=null;
             if(options.contains(PGPOptions.ENCRYPTION)){
-                enout=PGPEncryptor.configureEncryption(algorythm,publicKeys,comout);
+                outs=PGPEncryptor.configureEncryption(algorithm,publicKeys,comout);
+                enout=outs.get(0);
             }
             OutputStream zipout=enout;
             if(options.contains(PGPOptions.COMPRESSION)){
@@ -61,13 +73,68 @@ public class PGPProtocol {
             litout.close();
             if(options.contains(PGPOptions.AUTENTICATION)) PGPAuthenticator.encode(litout);
             if(zipout!=enout)zipout.close();
-            if(enout!=comout)enout.close();
-            if(output!=enout)comout.close();
+            if(enout!=comout){
+                for(OutputStream outputStream:outs){
+                    outputStream.close();
+                }
+            }
+            if(output!=comout)comout.close();
+        }
+        catch (PGPException e){
+            throw new PGPException(e.getMessage());
         }
         catch(Exception e){
-            System.err.println(e);
+            throw new PGPException(e+"");
         }
 
+    }
+
+
+    public static ByteArrayOutputStream decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
+        String outputFile=inputFile.replaceAll(".pgp","_decrypted.txt");
+        try(OutputStream output=new FileOutputStream(new File(outputFile)))
+        {
+            InputStream input = new FileInputStream(new File(inputFile));
+            //skida Armour !!!
+            PGPObjectFactory factory = new PGPObjectFactory(PGPUtil.getDecoderStream(input), new BcKeyFingerprintCalculator());
+            Iterator<Object> it=factory.iterator();
+            PGPOnePassSignatureList onePassHeader=null;
+            ByteArrayOutputStream content=null;
+            while(it.hasNext()){
+                Object header=it.next();
+                System.out.println(header.getClass());
+                if(header instanceof PGPEncryptedDataList){
+                    PGPEncryptor.DecriptionOutput decOut=PGPEncryptor.executeDecryption((PGPEncryptedDataList)header, getSecretKeys(keyRings),callback);
+                    if(decOut.mssg!=null){
+                        throw new Exception(decOut.mssg);
+                    }
+                    factory=new PGPObjectFactory(decOut.plainText, new BcKeyFingerprintCalculator());
+                    it=factory.iterator();
+                }
+                if(header instanceof PGPCompressedData){
+                    factory = new PGPObjectFactory(((PGPCompressedData)header).getDataStream(), new BcKeyFingerprintCalculator());
+                    it=factory.iterator();
+                }
+                if(header instanceof PGPLiteralData){
+                    PGPLiterator.copyData(output,(content=new ByteArrayOutputStream()),(PGPLiteralData) header);
+                }
+                if (header instanceof PGPOnePassSignatureList) {
+                    onePassHeader = (PGPOnePassSignatureList) header;
+                }
+
+                if (header instanceof PGPSignatureList) {
+                    PGPAuthenticator.ValidationOutput out=PGPAuthenticator.validate(onePassHeader,(PGPSignatureList)header, getPublicKeys(keyRings),content);
+                    if(out.msg!=null){
+                        throw new Exception(out.msg);
+                    }
+                    System.out.println(out.key.getUserIDs().next());
+                }
+            }
+            return content;
+        }
+        catch(Exception e){
+            throw new PGPException(e.getMessage());
+        }
     }
 
 }

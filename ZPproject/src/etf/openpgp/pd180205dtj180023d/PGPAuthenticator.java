@@ -9,6 +9,7 @@ import org.bouncycastle.openpgp.operator.PGPContentSigner;
 import org.bouncycastle.openpgp.operator.PGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.bc.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.PrivateKey;
@@ -35,16 +36,51 @@ public class PGPAuthenticator {
 
         PBESecretKeyDecryptor decryptor = new BcPBESecretKeyDecryptorBuilder(new BcPGPDigestCalculatorProvider())
                 .build(password.toCharArray());
-        generator.init(PGPSignature.BINARY_DOCUMENT,key.extractPrivateKey(decryptor));
-        PGPOnePassSignature signature=generator.generateOnePassVersion(false);
-        signature.encode(stream);
+        PGPOnePassSignature signature=null;
+        try {
+            generator.init(PGPSignature.BINARY_DOCUMENT,key.extractPrivateKey(decryptor));
+            signature=generator.generateOnePassVersion(false);
+            signature.encode(stream);
+        } catch (org.bouncycastle.openpgp.PGPException e) {
+            throw new PGPException("passphrase for key "+Long.toUnsignedString(key.getKeyID())+" not correct");
+        }
     }
 
     public static void updateSignature(byte[] buffer, int size){
         generator.update(buffer,0,size);
     }
 
-    public static void encode(OutputStream os) throws PGPException, IOException {
+    public static void encode(OutputStream os) throws PGPException, IOException, org.bouncycastle.openpgp.PGPException {
         generator.generate().encode(os);
+    }
+
+    public static class ValidationOutput{
+        public PGPPublicKey key;
+        public String msg;
+    }
+    public static ValidationOutput validate(PGPOnePassSignatureList header, PGPSignatureList signatures, List<PGPPublicKey> publicKeys, ByteArrayOutputStream content) throws IOException, org.bouncycastle.openpgp.PGPException {
+        System.out.println(signatures.size());
+        ValidationOutput output=new ValidationOutput();
+        PGPOnePassSignature data = header.get(0);
+        PGPPublicKey publicKey=publicKeys.stream().filter(key->key.getKeyID()==data.getKeyID()).findFirst().orElse(null);
+        if(publicKey==null){
+            output.msg="public key with id "+Long.toUnsignedString(data.getKeyID())+" does not exist";
+            return output;
+        }
+        data.init(new BcPGPContentVerifierBuilderProvider(), publicKey);
+        content.close();
+        data.update(content.toByteArray());
+        PGPSignature signature = signatures.get(0);
+        try {
+            if(!data.verify(signature)){
+                output.msg= "signature validation failed";
+                return output;
+            }
+        } catch (org.bouncycastle.openpgp.PGPException e) {
+            output.msg= "signature validation failed";
+            return output;
+        }
+        output.key=publicKey;
+        return output;
     }
 }

@@ -19,7 +19,7 @@ public class ChooseKeysDialog extends Dialog {
 
 
     public ChooseKeysDialog(Dialog owner, boolean ispublic) {
-        super(owner);
+        super(owner, "Choose keys");
         setSize(600, 600);
         setLocation(400, 50);
         setLayout(new BorderLayout());
