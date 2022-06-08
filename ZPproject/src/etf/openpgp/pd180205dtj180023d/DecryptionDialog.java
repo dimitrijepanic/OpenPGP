@@ -7,16 +7,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.ByteArrayOutputStream;
 
 public class DecryptionDialog extends Dialog {
     private FileDialog fd;
     private String filename;
     private String selectedPassword;
-    Label l=new Label();
-    Label label=new Label();
+    private TextArea te;
+    private Label l=new Label();
+    private Label label=new Label();
 
     public DecryptionDialog(Frame owner) {
-        super(owner);
+        super(owner, "Decryption");
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent we) {
                 setVisible(false);
@@ -45,17 +47,23 @@ public class DecryptionDialog extends Dialog {
             filename=fd.getDirectory()+"\\"+fd.getFile();
             label.setText(fd.getFile());
         });
+        te=new TextArea(10,10);
+        add(te,BorderLayout.CENTER);
         Button decrypt=new Button("decrypt");
         decrypt.addActionListener(button->{
             try {
-                PGPProtocol.decrypt(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
+                ByteArrayOutputStream os=PGPProtocol.decrypt(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
                     PasswordDialog dialog=new PasswordDialog(DecryptionDialog.this,key);
                     dialog.setVisible(true);
                     return selectedPassword;
                 });
-                DecryptionDialog.this.setVisible(false);
+                te.setText(os.toString());
+//                DecryptionDialog.this.setVisible(false);
             } catch (PGPException e) {
                 l.setText("ERROR:"+ e.getMessage());
+            }
+            catch (Exception e) {
+                l.setText("ERROR:"+ e);
             }
         });
         add(decrypt, BorderLayout.SOUTH);
@@ -66,7 +74,7 @@ public class DecryptionDialog extends Dialog {
 
     public class PasswordDialog extends Dialog{
         public PasswordDialog(Dialog owner, PGPSecretKey key) {
-            super(owner);
+            super(owner, "Enter password");
             setModal(true);
             addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent we) {
@@ -90,7 +98,7 @@ public class DecryptionDialog extends Dialog {
             p.add(pass);
             JPasswordField tf=new JPasswordField(10);
             p.add(tf);
-            Button addPassword=new Button("setPassword");
+            Button addPassword=new Button("set password");
             addPassword.addActionListener(butt->{
                 selectedPassword=String.copyValueOf(tf.getPassword());
                 setVisible(false);

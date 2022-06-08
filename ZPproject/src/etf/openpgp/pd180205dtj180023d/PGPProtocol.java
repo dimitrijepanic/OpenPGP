@@ -90,8 +90,8 @@ public class PGPProtocol {
     }
 
 
-    public static void decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
-        String outputFile=inputFile.replaceAll("_encrypted.pgp","_decrypted.txt");
+    public static ByteArrayOutputStream decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
+        String outputFile=inputFile.replaceAll(".pgp","_decrypted.txt");
         try(OutputStream output=new FileOutputStream(new File(outputFile)))
         {
             InputStream input = new FileInputStream(new File(inputFile));
@@ -130,6 +130,7 @@ public class PGPProtocol {
                     System.out.println(out.key.getUserIDs().next());
                 }
             }
+            return content;
         }
         catch(Exception e){
             throw new PGPException(e.getMessage());
