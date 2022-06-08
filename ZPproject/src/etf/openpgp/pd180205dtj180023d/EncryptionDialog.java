@@ -68,6 +68,7 @@ public class EncryptionDialog extends Dialog {
         index=0;
         filename=null;
         password=null;
+
     }
 
     private void fillScreen(){
@@ -98,6 +99,7 @@ public class EncryptionDialog extends Dialog {
     }
 
     private class InitialPanel extends NavigationPanel{
+        private Label loadedFile;
         public InitialPanel() {
             setLayout(new GridLayout(4,2));
             Label label=new Label("Choose options: ");
@@ -114,7 +116,7 @@ public class EncryptionDialog extends Dialog {
             encryption.addItemListener(e->{
                 changeNextLabel();
             });
-            Label loadedFile=new Label();
+            loadedFile=new Label();
             Button filebutton=new Button("Choose file to encrypt");
             filebutton.addActionListener(b->{
                 if(fd==null) {
@@ -143,6 +145,7 @@ public class EncryptionDialog extends Dialog {
         @Override
         public NavigationPanel nextPanel() {
             setSelectedOptions();
+            loadedFile.setText("");
             if(autentication.getState()) {
                 index++;
                 autentication.setState(false);
@@ -216,6 +219,7 @@ public class EncryptionDialog extends Dialog {
         @Override
         public NavigationPanel nextPanel() {
             password=String.copyValueOf(t.getPassword());
+            t.setText("");
             if(encryption.getState()) {
                 encryption.setState(false);
                 index++;

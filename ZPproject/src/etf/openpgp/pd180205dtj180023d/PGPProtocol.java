@@ -27,6 +27,10 @@ public class PGPProtocol {
         AUTENTICATION, ENCRYPTION, COMPRESSION, COMPATIBILITY
     }
 
+    public static interface Callback{
+        String call(PGPSecretKey key);
+    }
+
     //add params
     public static List<PGPPublicKey> getPublicKeys(List<MyKeyRing> rings) throws PGPException {
         return rings.stream().map(ring-> ring.getPublicKeyRing().getPublicKey()).collect(Collectors.toList());
@@ -35,7 +39,7 @@ public class PGPProtocol {
     public static List<PGPSecretKey> getSecretKeys(List<MyKeyRing> rings) throws PGPException {
         return rings.stream().map(ring-> ring.getSecretKeyRing().getSecretKey()).collect(Collectors.toList());
     }
-    public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorythm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password){
+    public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorithm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password){
         try(OutputStream output=new FileOutputStream(new File(inputFile+"_encrypted.pgp")))
         {
             InputStream input=new FileInputStream(new File(inputFile));
@@ -47,7 +51,7 @@ public class PGPProtocol {
             OutputStream enout=comout;
             List<OutputStream> outs=null;
             if(options.contains(PGPOptions.ENCRYPTION)){
-                outs=PGPEncryptor.configureEncryption(algorythm,publicKeys,comout);
+                outs=PGPEncryptor.configureEncryption(algorithm,publicKeys,comout);
                 enout=outs.get(0);
             }
             OutputStream zipout=enout;
@@ -83,7 +87,7 @@ public class PGPProtocol {
     }
 
 
-    public static void decrypt(String inputFile, String pass, List<MyKeyRing> keyRings){
+    public static void decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback){
         String outputFile=inputFile.replaceAll("_encrypted.pgp","_decrypted.txt");
         try(OutputStream output=new FileOutputStream(new File(outputFile)))
         {
@@ -97,7 +101,7 @@ public class PGPProtocol {
                 Object header=it.next();
                 System.out.println(header.getClass());
                 if(header instanceof PGPEncryptedDataList){
-                    PGPEncryptor.DecriptionOutput decOut=PGPEncryptor.executeDecryption((PGPEncryptedDataList)header, getSecretKeys(keyRings),pass);
+                    PGPEncryptor.DecriptionOutput decOut=PGPEncryptor.executeDecryption((PGPEncryptedDataList)header, getSecretKeys(keyRings),callback);
                     if(decOut.mssg!=null){
                         //ispisi poruku
                         break;

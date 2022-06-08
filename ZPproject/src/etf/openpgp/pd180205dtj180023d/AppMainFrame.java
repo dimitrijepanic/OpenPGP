@@ -42,6 +42,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 	private DeleteExportKeyDialog deleteKeyDialog;
 	private List<MyKeyRing> keyRings = new ArrayList<>();
 	private ImportKeyDialog importKeyDialog ;
+	private DecryptionDialog decryptionDialog;
 	
 	// panels for keys
 	private Panel keyPanel;
@@ -206,7 +207,9 @@ public class AppMainFrame extends Frame implements ActionListener{
 		});
 		decryptionItem.setFont(new Font("Serif", Font.BOLD, 15));
 		decryptionItem.addActionListener(item->{
-			PGPProtocol.decrypt("D:\\GIT_projekti\\ZPproject\\proba2.txt_encrypted.pgp","jana", keyRings);
+//			PGPProtocol.decrypt("D:\\GIT_projekti\\ZPproject\\proba2.txt_encrypted.pgp","jana", keyRings);
+			if(decryptionDialog==null) decryptionDialog=new DecryptionDialog(this);
+			decryptionDialog.setVisible(true);
 		});
 		
 		dialogItem.addActionListener(b->{

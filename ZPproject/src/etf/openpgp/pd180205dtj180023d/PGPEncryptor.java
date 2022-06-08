@@ -52,7 +52,7 @@ public class PGPEncryptor {
         String mssg;
     }
 
-    public static DecriptionOutput executeDecryption(PGPEncryptedDataList header, List<PGPSecretKey> secrets, String password) throws IOException, PGPException {
+    public static DecriptionOutput executeDecryption(PGPEncryptedDataList header, List<PGPSecretKey> secrets, PGPProtocol.Callback callback) throws IOException, PGPException {
         DecriptionOutput output=new DecriptionOutput();
         Iterator<PGPEncryptedData> encryptedData = header.getEncryptedDataObjects();
         if (encryptedData.hasNext()){
@@ -62,6 +62,7 @@ public class PGPEncryptor {
                 output.mssg="no secret keys with id: "+data.getKeyID();
                 return output;
             }
+            String password=callback.call(secretKey);
             PBESecretKeyDecryptor decryptor = new BcPBESecretKeyDecryptorBuilder(new BcPGPDigestCalculatorProvider())
                     .build(password.toCharArray());
             PGPPrivateKey key=secretKey.extractPrivateKey(decryptor);
