@@ -9,6 +9,7 @@ import org.bouncycastle.openpgp.operator.PGPContentSigner;
 import org.bouncycastle.openpgp.operator.PGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.bc.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.PrivateKey;
@@ -46,5 +47,30 @@ public class PGPAuthenticator {
 
     public static void encode(OutputStream os) throws PGPException, IOException {
         generator.generate().encode(os);
+    }
+
+    public static class ValidationOutput{
+        public PGPPublicKey key;
+        public String msg;
+    }
+    public static ValidationOutput validate(PGPOnePassSignatureList header, PGPSignatureList signatures, List<PGPPublicKey> publicKeys, ByteArrayOutputStream content) throws PGPException, IOException {
+        System.out.println(signatures.size());
+        ValidationOutput output=new ValidationOutput();
+        PGPOnePassSignature data = header.get(0);
+        PGPPublicKey publicKey=publicKeys.stream().filter(key->key.getKeyID()==data.getKeyID()).findFirst().orElse(null);
+        if(publicKey==null){
+            output.msg="public key with id "+data.getKeyID()+" does not exist";
+            return output;
+        }
+        data.init(new BcPGPContentVerifierBuilderProvider(), publicKey);
+        content.close();
+        data.update(content.toByteArray());
+        PGPSignature signature = signatures.get(0);
+        if(!data.verify(signature)){
+            output.msg= "signature validation failed";
+            return output;
+        }
+        output.key=publicKey;
+        return output;
     }
 }

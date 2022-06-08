@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -33,16 +34,17 @@ public class PGPEncryptor {
         }
     }
 
-    public static OutputStream configureEncryption(SymetricKeyAlgorithm algorythm, List<PGPPublicKey> publicKeys, OutputStream stream) throws IOException, PGPException {
+    public static List<OutputStream> configureEncryption(SymetricKeyAlgorithm algorythm, List<PGPPublicKey> publicKeys, OutputStream stream) throws IOException, PGPException {
         BcPGPDataEncryptorBuilder builder=new BcPGPDataEncryptorBuilder(algorythm.map());
         builder.setSecureRandom(new SecureRandom());
         builder.setWithIntegrityPacket(true);
-
-        PGPEncryptedDataGenerator generator=new PGPEncryptedDataGenerator(builder);
-        publicKeys.forEach(publicKey -> {
+        List<OutputStream> outs=new ArrayList<>();
+        for(PGPPublicKey publicKey:publicKeys){
+            PGPEncryptedDataGenerator generator=new PGPEncryptedDataGenerator(builder);
             generator.addMethod(new BcPublicKeyKeyEncryptionMethodGenerator(publicKey));
-        });
-        return generator.open(stream,new byte[PGPProtocol.BUFFER_SIZE]);
+            outs.add(0,generator.open((outs.size()==0)?stream:outs.get(0),new byte[PGPProtocol.BUFFER_SIZE]));
+        }
+        return outs;
     }
 
     public static class DecriptionOutput{
@@ -53,9 +55,7 @@ public class PGPEncryptor {
     public static DecriptionOutput executeDecryption(PGPEncryptedDataList header, List<PGPSecretKey> secrets, String password) throws IOException, PGPException {
         DecriptionOutput output=new DecriptionOutput();
         Iterator<PGPEncryptedData> encryptedData = header.getEncryptedDataObjects();
-        //mora while zbog vise public keyeva
-        PGPPrivateKey old=null;
-        while (encryptedData.hasNext()){
+        if (encryptedData.hasNext()){
             PGPPublicKeyEncryptedData data=(PGPPublicKeyEncryptedData)encryptedData.next();
             PGPSecretKey secretKey=secrets.stream().filter(key->key.getKeyID()==data.getKeyID()).findFirst().orElse(null);
             if(secretKey==null){
@@ -70,7 +70,6 @@ public class PGPEncryptor {
                 return output;
             }
             output.plainText=data.getDataStream(new BcPublicKeyDataDecryptorFactory(key));
-            old=key;
         }
         return output;
     }

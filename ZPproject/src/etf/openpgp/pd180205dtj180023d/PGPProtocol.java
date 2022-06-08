@@ -45,8 +45,10 @@ public class PGPProtocol {
                 comout=new ArmoredOutputStream(output);
             }
             OutputStream enout=comout;
+            List<OutputStream> outs=null;
             if(options.contains(PGPOptions.ENCRYPTION)){
-                enout=PGPEncryptor.configureEncryption(algorythm,publicKeys,comout);
+                outs=PGPEncryptor.configureEncryption(algorythm,publicKeys,comout);
+                enout=outs.get(0);
             }
             OutputStream zipout=enout;
             if(options.contains(PGPOptions.COMPRESSION)){
@@ -67,8 +69,12 @@ public class PGPProtocol {
             litout.close();
             if(options.contains(PGPOptions.AUTENTICATION)) PGPAuthenticator.encode(litout);
             if(zipout!=enout)zipout.close();
-            if(enout!=comout)enout.close();
-            if(output!=enout)comout.close();
+            if(enout!=comout){
+                for(OutputStream outputStream:outs){
+                    outputStream.close();
+                }
+            }
+            if(output!=comout)comout.close();
         }
         catch(Exception e){
             System.err.println(e);
@@ -85,6 +91,8 @@ public class PGPProtocol {
             //skida Armour !!!
             PGPObjectFactory factory = new PGPObjectFactory(PGPUtil.getDecoderStream(input), new BcKeyFingerprintCalculator());
             Iterator<Object> it=factory.iterator();
+            PGPOnePassSignatureList onePassHeader=null;
+            ByteArrayOutputStream content=null;
             while(it.hasNext()){
                 Object header=it.next();
                 System.out.println(header.getClass());
@@ -97,8 +105,26 @@ public class PGPProtocol {
                     factory=new PGPObjectFactory(decOut.plainText, new BcKeyFingerprintCalculator());
                     it=factory.iterator();
                 }
-            }
+                if(header instanceof PGPCompressedData){
+                    factory = new PGPObjectFactory(((PGPCompressedData)header).getDataStream(), new BcKeyFingerprintCalculator());
+                    it=factory.iterator();
+                }
+                if(header instanceof PGPLiteralData){
+                    PGPLiterator.copyData(output,(content=new ByteArrayOutputStream()),(PGPLiteralData) header);
+                }
+                if (header instanceof PGPOnePassSignatureList) {
+                    onePassHeader = (PGPOnePassSignatureList) header;
+                }
 
+                if (header instanceof PGPSignatureList) {
+                    PGPAuthenticator.ValidationOutput out=PGPAuthenticator.validate(onePassHeader,(PGPSignatureList)header, getPublicKeys(keyRings),content);
+                    if(out.msg!=null){
+                        //ispisi poruku
+                        break;
+                    }
+                    System.out.println(out.key.getUserIDs().next());
+                }
+            }
         }
         catch(Exception e){
             System.err.println(e);
