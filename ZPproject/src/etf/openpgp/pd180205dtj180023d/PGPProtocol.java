@@ -28,7 +28,7 @@ public class PGPProtocol {
     private static List<PGPSecretKey> getSecretKeys(List<MyKeyRing> rings){
         return rings.stream().map(ring-> ring.getSecretKeyRing().getSecretKey()).collect(Collectors.toList());
     }
-    public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorithm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password) throws PGPException {
+    public static void sendMessage(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorithm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password) throws PGPException {
         try(OutputStream output=new FileOutputStream(new File(inputFile+"_encrypted.pgp")))
         {
             InputStream input=new FileInputStream(new File(inputFile));
@@ -83,7 +83,7 @@ public class PGPProtocol {
         PGPPublicKey key;
     }
 
-    public static DecryptOutput decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
+    public static DecryptOutput receiveMessage(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
         String outputFile=inputFile.replaceAll(".pgp","_decrypted.txt");
         try(OutputStream output=new FileOutputStream(new File(outputFile)))
         {

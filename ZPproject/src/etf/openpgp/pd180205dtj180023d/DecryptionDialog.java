@@ -2,12 +2,10 @@ package etf.openpgp.pd180205dtj180023d;
 
 import org.bouncycastle.openpgp.PGPSecretKey;
 
-import javax.crypto.SecretKey;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.ByteArrayOutputStream;
 
 public class DecryptionDialog extends Dialog {
     private FileDialog fd;
@@ -52,7 +50,7 @@ public class DecryptionDialog extends Dialog {
         Button decrypt=new Button("decrypt");
         decrypt.addActionListener(button->{
             try {
-                PGPProtocol.DecryptOutput output=PGPProtocol.decrypt(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
+                PGPProtocol.DecryptOutput output=PGPProtocol.receiveMessage(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
                     PasswordDialog dialog=new PasswordDialog(DecryptionDialog.this,key);
                     dialog.setVisible(true);
                     return selectedPassword;
