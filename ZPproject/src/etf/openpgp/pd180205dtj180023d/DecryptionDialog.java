@@ -52,12 +52,12 @@ public class DecryptionDialog extends Dialog {
         Button decrypt=new Button("decrypt");
         decrypt.addActionListener(button->{
             try {
-                ByteArrayOutputStream os=PGPProtocol.decrypt(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
+                PGPProtocol.DecryptOutput output=PGPProtocol.decrypt(filename,((AppMainFrame)getParent()).getKeyRings(), (key)->{
                     PasswordDialog dialog=new PasswordDialog(DecryptionDialog.this,key);
                     dialog.setVisible(true);
                     return selectedPassword;
                 });
-                te.setText(os.toString());
+                te.setText(output.stream.toString()+((output.key!=null)?("\nSigned by: "+output.key.getUserIDs().next()):""));
 //                DecryptionDialog.this.setVisible(false);
             } catch (PGPException e) {
                 l.setText("ERROR:"+ e.getMessage());

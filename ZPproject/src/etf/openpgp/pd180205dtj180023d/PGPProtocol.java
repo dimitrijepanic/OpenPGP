@@ -78,8 +78,12 @@ public class PGPProtocol {
 
     }
 
+    public static class DecryptOutput{
+        ByteArrayOutputStream stream;
+        PGPPublicKey key;
+    }
 
-    public static ByteArrayOutputStream decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
+    public static DecryptOutput decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
         String outputFile=inputFile.replaceAll(".pgp","_decrypted.txt");
         try(OutputStream output=new FileOutputStream(new File(outputFile)))
         {
@@ -89,6 +93,7 @@ public class PGPProtocol {
             Iterator<Object> it=factory.iterator();
             PGPOnePassSignatureList onePassHeader=null;
             ByteArrayOutputStream content=null;
+            PGPAuthenticator.ValidationOutput out=null;
             while(it.hasNext()){
                 Object header=it.next();
                 System.out.println(header.getClass());
@@ -112,14 +117,17 @@ public class PGPProtocol {
                 }
 
                 if (header instanceof PGPSignatureList) {
-                    PGPAuthenticator.ValidationOutput out=PGPAuthenticator.validate(onePassHeader,(PGPSignatureList)header, getPublicKeys(keyRings),content);
+                    out=PGPAuthenticator.validate(onePassHeader,(PGPSignatureList)header, getPublicKeys(keyRings),content);
                     if(out.msg!=null){
                         throw new Exception(out.msg);
                     }
                     System.out.println(out.key.getUserIDs().next());
                 }
             }
-            return content;
+            DecryptOutput ret=new DecryptOutput();
+            ret.key=(out!=null)?out.key:null;
+            ret.stream=content;
+            return ret;
         }
         catch(Exception e){
             throw new PGPException(e.getMessage());
