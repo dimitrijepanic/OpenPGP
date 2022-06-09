@@ -34,7 +34,7 @@ public class PGPEncryptor {
         }
     }
 
-    public static List<OutputStream> configureEncryption(SymetricKeyAlgorithm algorythm, List<PGPPublicKey> publicKeys, OutputStream stream) throws IOException, PGPException, org.bouncycastle.openpgp.PGPException {
+    public static List<OutputStream> configureEncryption(SymetricKeyAlgorithm algorythm, List<PGPPublicKey> publicKeys, OutputStream stream) throws IOException, org.bouncycastle.openpgp.PGPException {
         BcPGPDataEncryptorBuilder builder=new BcPGPDataEncryptorBuilder(algorythm.map());
         builder.setSecureRandom(new SecureRandom());
         builder.setWithIntegrityPacket(true);

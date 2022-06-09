@@ -1,23 +1,12 @@
 package etf.openpgp.pd180205dtj180023d;
 
-import org.apache.commons.codec.binary.Base64OutputStream;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.CompressionAlgorithmTags;
 import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator;
-import org.bouncycastle.openpgp.operator.bc.BcPGPContentVerifierBuilderProvider;
-import org.bouncycastle.openpgp.operator.bc.BcPublicKeyDataDecryptorFactory;
-import org.bouncycastle.util.io.Streams;
 
-import javax.crypto.SecretKey;
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.PublicKey;
-import java.security.SignatureException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PGPProtocol {
@@ -32,11 +21,11 @@ public class PGPProtocol {
     }
 
     //add params
-    public static List<PGPPublicKey> getPublicKeys(List<MyKeyRing> rings) throws PGPException {
+    private static List<PGPPublicKey> getPublicKeys(List<MyKeyRing> rings){
         return rings.stream().map(ring-> ring.getPublicKeyRing().getPublicKey()).collect(Collectors.toList());
     }
 
-    public static List<PGPSecretKey> getSecretKeys(List<MyKeyRing> rings) throws PGPException {
+    private static List<PGPSecretKey> getSecretKeys(List<MyKeyRing> rings){
         return rings.stream().map(ring-> ring.getSecretKeyRing().getSecretKey()).collect(Collectors.toList());
     }
     public static void encrypt(String inputFile, PGPEncryptor.SymetricKeyAlgorithm algorithm, List<PGPOptions> options, List<MyKeyRing> publicKeyRings, MyKeyRing secretKey, String password) throws PGPException {
@@ -62,7 +51,7 @@ public class PGPProtocol {
             if(options.contains(PGPOptions.AUTENTICATION)){
                 PGPAuthenticator.configureAuthentication(secretKey.getSecretKeyRing().getSecretKey(),password,zipout);
             }
-            OutputStream litout = PGPLiterator.configureAuthentication(zipout,inputFile);
+            OutputStream litout = PGPLiterator.configureLiteralBlock(zipout,inputFile);
 
             byte[] buffer=new byte[BUFFER_SIZE];
             int size=-1;
@@ -89,8 +78,12 @@ public class PGPProtocol {
 
     }
 
+    public static class DecryptOutput{
+        ByteArrayOutputStream stream;
+        PGPPublicKey key;
+    }
 
-    public static ByteArrayOutputStream decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
+    public static DecryptOutput decrypt(String inputFile, List<MyKeyRing> keyRings, Callback callback) throws PGPException {
         String outputFile=inputFile.replaceAll(".pgp","_decrypted.txt");
         try(OutputStream output=new FileOutputStream(new File(outputFile)))
         {
@@ -100,6 +93,7 @@ public class PGPProtocol {
             Iterator<Object> it=factory.iterator();
             PGPOnePassSignatureList onePassHeader=null;
             ByteArrayOutputStream content=null;
+            PGPAuthenticator.ValidationOutput out=null;
             while(it.hasNext()){
                 Object header=it.next();
                 System.out.println(header.getClass());
@@ -123,14 +117,17 @@ public class PGPProtocol {
                 }
 
                 if (header instanceof PGPSignatureList) {
-                    PGPAuthenticator.ValidationOutput out=PGPAuthenticator.validate(onePassHeader,(PGPSignatureList)header, getPublicKeys(keyRings),content);
+                    out=PGPAuthenticator.validate(onePassHeader,(PGPSignatureList)header, getPublicKeys(keyRings),content);
                     if(out.msg!=null){
                         throw new Exception(out.msg);
                     }
                     System.out.println(out.key.getUserIDs().next());
                 }
             }
-            return content;
+            DecryptOutput ret=new DecryptOutput();
+            ret.key=(out!=null)?out.key:null;
+            ret.stream=content;
+            return ret;
         }
         catch(Exception e){
             throw new PGPException(e.getMessage());

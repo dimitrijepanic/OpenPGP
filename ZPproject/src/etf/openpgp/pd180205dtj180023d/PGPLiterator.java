@@ -17,7 +17,7 @@ import java.util.Date;
 
 public class PGPLiterator {
 
-    public static OutputStream configureAuthentication(OutputStream stream, String inputFile) throws IOException, PGPException {
+    public static OutputStream configureLiteralBlock(OutputStream stream, String inputFile) throws IOException {
         PGPLiteralDataGenerator generator = new PGPLiteralDataGenerator();
         return generator.open(stream, PGPLiteralData.BINARY, inputFile, new Date(), new byte [PGPProtocol.BUFFER_SIZE] );
     }
