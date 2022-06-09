@@ -213,7 +213,7 @@ public class AppMainFrame extends Frame implements ActionListener{
 				}
 				
 				if(pressedCount == 1) {
-					deleteKeyDialog.setValues(keyRings.get(table.getSelectedRow()), table.getSelectedRow());
+					deleteKeyDialog.setValues(keyRings.get(privateKeyTable.getSelectedRow()), privateKeyTable.getSelectedRow());
 					deleteKeyDialog.setVisible(true);
 				}
 				
