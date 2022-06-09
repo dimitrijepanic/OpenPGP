@@ -2,8 +2,6 @@ package etf.openpgp.pd180205dtj180023d;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -248,7 +246,7 @@ public class EncryptionDialog extends Dialog {
         }
         else {
             try{
-                PGPProtocol.encrypt(filename,symetricKeyAlgorithm,options,selectedEncryptionKeys,signatureKey,password);
+                PGPProtocol.sendMessage(filename,symetricKeyAlgorithm,options,selectedEncryptionKeys,signatureKey,password);
                 setVisible(false);
                 reset();
             }
