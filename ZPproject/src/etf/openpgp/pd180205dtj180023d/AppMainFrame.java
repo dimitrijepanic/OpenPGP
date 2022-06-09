@@ -20,6 +20,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -118,8 +119,18 @@ public class AppMainFrame extends Frame implements ActionListener{
 		add(keyPanel, BorderLayout.CENTER);
 	}
 	
+	private void emptyFolder(File folder) {
+		File[] files = folder.listFiles();
+		if(files != null) {
+			for(File file: files) {
+				file.delete();
+			}
+		}
+	}
+	
 	private void saveKeys() {
 		int numOfKeys = keyRings.size();
+		emptyFolder(new File("./savedkeys"));
 		String setupFile = "./savedkeys/setup.txt";
 		try {
 			FileWriter out = new FileWriter(setupFile);
